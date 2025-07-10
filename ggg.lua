@@ -101,7 +101,7 @@ local buttonContainer = Instance.new("ScrollingFrame")
 buttonContainer.Size = UDim2.new(1, 0, 1, 0)
 buttonContainer.BackgroundTransparency = 1
 buttonContainer.ScrollBarThickness = 5
-buttonContainer.CanvasSize = UDim2.new(0, 0, 0, 300)
+buttonContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
 buttonContainer.Parent = contentFrame
 
 local uiListLayout = Instance.new("UIListLayout")
@@ -126,8 +126,6 @@ local settingsStroke = Instance.new("UIStroke")
 settingsStroke.Thickness = 3
 settingsStroke.Color = Color3.fromRGB(255, 255, 255)
 settingsStroke.Parent = settingsFrame
-
-local settingsScrollcredible
 
 local settingsListLayout = Instance.new("UIListLayout")
 settingsListLayout.Padding = UDim.new(0, 10)
@@ -208,8 +206,10 @@ local function createButton(text, callback)
     buttonCorner.Parent = button
 
     button.MouseButton1Click:Connect(function()
-        callback()
-        showNotification("Activated: " .. text, Color3.fromRGB(0, 255, 0))
+        if callback then
+            callback()
+            showNotification("Activated: " .. text, Color3.fromRGB(0, 255, 0))
+        end
     end)
 
     -- Анимация при наведении
@@ -241,8 +241,10 @@ local function createSettingsButton(text, callback)
     buttonCorner.Parent = button
 
     button.MouseButton1Click:Connect(function()
-        callback()
-        showNotification("Changed: " .. text, Color3.fromRGB(0, 200, 255))
+        if callback then
+            callback()
+            showNotification("Changed: " .. text, Color3.fromRGB(0, 200, 255))
+        end
     end)
 
     button.MouseEnter:Connect(function()
@@ -282,16 +284,24 @@ local function showNotification(text, color)
     textLabel.Parent = notification
 
     -- Анимация появления
-    notification.Position = UDim2.new(1, 0, 0, notification.Position.Y.Offset)
-    notification.BackgroundTransparency = 1
-    TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, notification.Position.Y.Offset), BackgroundTransparency = 0.1}):Play()
+    if notification then
+        notification.Position = UDim2.new(1, 0, 0, notification.Position.Y.Offset)
+        notification.BackgroundTransparency = 1
+        local tweenIn = TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, notification.Position.Y.Offset), BackgroundTransparency = 0.1})
+        tweenIn:Play()
+    end
 
-    -- Удаление через 4 секунды
+    -- Удаление через 4 секунды с анимацией исчезновения
     spawn(function()
-        wait(4)
-        TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Position = UDim2.new(1, 0, 0, notification.Position.Y.Offset), BackgroundTransparency = 1}):Play()
-        wait(0.5)
-        notification:Destroy()
+        if notification then
+            wait(4)
+            local tweenOut = TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Position = UDim2.new(1, 0, 0, notification.Position.Y.Offset), BackgroundTransparency = 1})
+            tweenOut:Play()
+            tweenOut.Completed:Wait()
+            if notification then
+                notification:Destroy()
+            end
+        end
     end)
 end
 
@@ -329,14 +339,16 @@ local function toggleMenu()
     isMenuOpen = not isMenuOpen
     if isMenuOpen then
         mainFrame.Visible = true
-        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)}):Play()
+        local tween = TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)})
+        tween:Play()
         showNotification("Menu Opened", Color3.fromRGB(0, 255, 0))
     else
         if isSettingsOpen then
             toggleSettings()
         end
-        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 400, 0, 0)}):Play()
-        wait(0.5)
+        local tween = TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 400, 0, 0)})
+        tween:Play()
+        tween.Completed:Wait()
         mainFrame.Visible = false
         showNotification("Menu Closed", Color3.fromRGB(255, 0, 0))
     end
@@ -349,11 +361,13 @@ local function toggleMinimize()
         if isSettingsOpen then
             toggleSettings()
         end
-        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 400, 0, 50)}):Play()
+        local tween = TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 400, 0, 50)})
+        tween:Play()
         contentFrame.Visible = false
         showNotification("Menu Minimized", Color3.fromRGB(255, 200, 0))
     else
-        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)}):Play()
+        local tween = TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)})
+        tween:Play()
         contentFrame.Visible = true
         showNotification("Menu Restored", Color3.fromRGB(0, 255, 0))
     end
@@ -365,11 +379,13 @@ local function toggleSettings()
     settingsFrame.Visible = isSettingsOpen
     if isSettingsOpen then
         settingsFrame.Position = UDim2.new(1, 200, 0, 0)
-        TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = UDim2.new(1, 0, 0, 0)}):Play()
+        local tween = TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = UDim2.new(1, 0, 0, 0)})
+        tween:Play()
         showNotification("Settings Opened", Color3.fromRGB(0, 200, 255))
     else
-        TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Position = UDim2.new(1, 200, 0, 0)}):Play()
-        wait(0.5)
+        local tween = TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Position = UDim2.new(1, 200, 0, 0)})
+        tween:Play()
+        tween.Completed:Wait()
         settingsFrame.Visible = false
         showNotification("Settings Closed", Color3.fromRGB(0, 200, 255))
     end
@@ -411,14 +427,14 @@ end)
 
 -- Создание кнопок главного меню
 createButton("Teleport to Center", function()
-    if player.Character then
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 5, 0))
         showNotification("Teleported to center", Color3.fromRGB(0, 255, 0))
     end
 end)
 
 createButton("God Mode", function()
-    if player.Character then
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
         player.Character.Humanoid.MaxHealth = math.huge
         player.Character.Humanoid.Health = math.huge
         showNotification("God Mode enabled", Color3.fromRGB(0, 255, 0))
@@ -426,20 +442,20 @@ createButton("God Mode", function()
 end)
 
 createButton("Reset Character", function()
-    if player.Character then
-        player:LoadCharacter()
-        showNotification("Character reset", Color3.fromRGB(0, 255, 0))
-    end
+    player:LoadCharacter()
+    showNotification("Character reset", Color3.fromRGB(0, 255, 0))
 end)
 
 createButton("Night Vision", function()
-    local nightVision = Instance.new("ColorCorrectionEffect")
-    nightVision.Brightness = 0.1
-    nightVision.Contrast = 0.2
-    nightVision.Saturation = 0.1
-    nightVision.TintColor = Color3.fromRGB(200, 255, 200)
-    nightVision.Parent = Lighting
-    showNotification("Night Vision enabled", Color3.fromRGB(0, 255, 0))
+    if not Lighting:FindFirstChildOfClass("ColorCorrectionEffect") then
+        local nightVision = Instance.new("ColorCorrectionEffect")
+        nightVision.Brightness = 0.1
+        nightVision.Contrast = 0.2
+        nightVision.Saturation = 0.1
+        nightVision.TintColor = Color3.fromRGB(200, 255, 200)
+        nightVision.Parent = Lighting
+        showNotification("Night Vision enabled", Color3.fromRGB(0, 255, 0))
+    end
 end)
 
 createButton("Clear Lighting Effects", function()
@@ -452,7 +468,7 @@ createButton("Clear Lighting Effects", function()
 end)
 
 createButton("High Jump", function()
-    if player.Character then
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
         player.Character.Humanoid.JumpPower = 100
         showNotification("High Jump enabled", Color3.fromRGB(0, 255, 0))
     end
@@ -474,5 +490,7 @@ end
 -- Начальная анимация появления
 mainFrame.Size = UDim2.new(0, 0, 0, 0)
 mainFrame.Visible = true
-TweenService:Create(mainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)}):Play()
+local tweenStart = TweenService:Create(mainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)})
+tweenStart:Play()
+tweenStart.Completed:Wait()
 showNotification("Welcome to Divine Menu!", Color3.fromRGB(0, 200, 255))

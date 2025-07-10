@@ -1,48 +1,65 @@
--- Инициализация библиотеки GUI (Synapse X / Delta совместимая)
+-- Инициализация библиотеки GUI (Kavo UI с кастомными улучшениями)
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Grow A Garden | Delta GUI", "DarkTheme")
-
--- Основные переменные
-local Player = game.Players.LocalPlayer
+local Window = Library.CreateLib("Grow A Garden | Perfect GUI", "DarkTheme")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Player = game.Players.LocalPlayer
 
--- Создание главного окна
-local MainTab = Window:NewTab("Основное")
-local MainSection = MainTab:NewSection("Автоматизация для Grow A Garden")
-local AutoBuyTab = Window:NewTab("Автопокупка")
-local AutoBuySection = AutoBuyTab:NewSection("Настройки автопокупки")
-local SettingsTab = Window:NewTab("Настройки")
-local SettingsSection = SettingsTab:NewSection("Управление GUI")
-
--- Стилизация и анимация заголовка
-local function RainbowText(label)
-    local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true)
+-- Настройка кастомного стиля GUI
+local function applyCustomStyle(uiElement)
+    local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
     local colors = {
         Color3.fromRGB(255, 0, 0),
-        Color3.fromRGB(255, 165, 0),
+        Color3.fromRGB(255, 127, 0),
         Color3.fromRGB(255, 255, 0),
         Color3.fromRGB(0, 255, 0),
+        Color3.fromRGB(0, 255, 255),
         Color3.fromRGB(0, 0, 255),
-        Color3.fromRGB(75, 0, 130),
-        Color3.fromRGB(238, 130, 238)
+        Color3.fromRGB(127, 0, 255)
     }
     local i = 1
     RunService.RenderStepped:Connect(function()
-        local tween = TweenService:Create(label, tweenInfo, {TextColor3 = colors[i]})
+        local tween = TweenService:Create(uiElement, tweenInfo, {BackgroundColor3 = colors[i]})
         tween:Play()
         i = i % #colors + 1
     end)
 end
 
--- Применение радужной анимации к заголовку
-local titleLabel = Window.Title
-RainbowText(titleLabel)
+-- Анимация неоновой подсветки для кнопок
+local function neonButtonEffect(button)
+    local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, tweenInfo, {BackgroundColor3 = Color3.fromRGB(255, 255, 255), TextColor3 = Color3.fromRGB(0, 0, 0)}):Play()
+    end)
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, tweenInfo, {BackgroundColor3 = Color3.fromRGB(30, 30, 30), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    end)
+end
 
--- Функции для Grow A Garden
+-- Применение градиентного фона к окну
+local function applyGradientBackground(ui)
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 50)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 100, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 50))
+    })
+    gradient.Rotation = 45
+    gradient.Parent = ui
+    local tweenInfo = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true)
+    TweenService:Create(gradient, tweenInfo, {Rotation = 360}):Play()
+end
+
+-- Инициализация GUI
+applyGradientBackground(Window.Ui)
+applyCustomStyle(Window.Title)
+local SettingsTab = Window:NewTab("Настройки")
+local GameplaySection = SettingsTab:NewSection("Игровые функции")
+local CustomizationSection = SettingsTab:NewSection("Кастомизация GUI")
+
+-- Игровые переменные
 local autoPlant = false
 local autoCollect = false
 local autoSell = false
@@ -55,8 +72,11 @@ local selectedSeed = "Carrot"
 local selectedEgg = "CommonEgg"
 local selectedGear = "CommonGear"
 local selectedCosmetic = "CommonCosmetic"
+local guiTransparency = 0.2
+local rgbSpeed = 2
+local selectedTheme = "DarkTheme"
 
--- Списки предметов для автопокупки с учетом редкостей
+-- Списки предметов с редкостями
 local seedOptions = {
     ["Common"] = {"Carrot", "Strawberry", "Blueberry"},
     ["Uncommon"] = {"Rose", "Orange Tulip", "Tomato"},
@@ -139,8 +159,8 @@ local function purchaseItem(itemType, itemName, amount)
     end
 end
 
--- Автопосадка
-MainSection:NewToggle("Автопосадка", "Автоматически сажает растения", function(state)
+-- Игровые функции
+GameplaySection:NewToggle("Автопосадка", "Автоматически сажает растения", function(state)
     autoPlant = state
     if state then
         spawn(function()
@@ -162,8 +182,7 @@ MainSection:NewToggle("Автопосадка", "Автоматически са
     end
 end)
 
--- Автосбор
-MainSection:NewToggle("Автосбор", "Автоматически собирает урожай", function(state)
+GameplaySection:NewToggle("Автосбор", "Автоматически собирает урожай", function(state)
     autoCollect = state
     if state then
         spawn(function()
@@ -185,8 +204,7 @@ MainSection:NewToggle("Автосбор", "Автоматически собир
     end
 end)
 
--- Автопродажа
-MainSection:NewToggle("Автопродажа", "Автоматически продает урожай", function(state)
+GameplaySection:NewToggle("Автопродажа", "Автоматически продает урожай", function(state)
     autoSell = state
     if state then
         spawn(function()
@@ -203,8 +221,7 @@ MainSection:NewToggle("Автопродажа", "Автоматически пр
     end
 end)
 
--- Бесконечные семена
-MainSection:NewToggle("Бесконечные семена", "Дает бесконечные семена", function(state)
+GameplaySection:NewToggle("Бесконечные семена", "Дает бесконечные семена", function(state)
     infiniteSeeds = state
     if state then
         spawn(function()
@@ -223,13 +240,12 @@ MainSection:NewToggle("Бесконечные семена", "Дает беск�
     end
 end)
 
--- Автопокупка семян
-AutoBuySection:NewDropdown("Выбор семян", "Выберите семена для автопокупки", flatSeedOptions, function(selected)
+GameplaySection:NewDropdown("Выбор семян", "Выберите семена для автопокупки и посадки", flatSeedOptions, function(selected)
     selectedSeed = selected
     Library:Notify("Выбрано семя: " .. selected, 3)
 end)
 
-AutoBuySection:NewToggle("Автопокупка семян", "Автоматически покупает выбранные семена", function(state)
+GameplaySection:NewToggle("Автопокупка семян", "Автоматически покупает выбранные семена", function(state)
     autoBuySeeds = state
     if state then
         spawn(function()
@@ -245,13 +261,12 @@ AutoBuySection:NewToggle("Автопокупка семян", "Автомати�
     end
 end)
 
--- Автопокупка яиц
-AutoBuySection:NewDropdown("Выбор яиц", "Выберите яйца для автопокупки", flatEggOptions, function(selected)
+GameplaySection:NewDropdown("Выбор яиц", "Выберите яйца для автопокупки", flatEggOptions, function(selected)
     selectedEgg = selected
     Library:Notify("Выбрано яйцо: " .. selected, 3)
 end)
 
-AutoBuySection:NewToggle("Автопокупка яиц", "Автоматически покупает выбранные яйца", function(state)
+GameplaySection:NewToggle("Автопокупка яиц", "Автоматически покупает выбранные яйца", function(state)
     autoBuyEggs = state
     if state then
         spawn(function()
@@ -267,13 +282,12 @@ AutoBuySection:NewToggle("Автопокупка яиц", "Автоматиче�
     end
 end)
 
--- Автопокупка снаряжения
-AutoBuySection:NewDropdown("Выбор снаряжения", "Выберите снаряжение для автопокупки", flatGearOptions, function(selected)
+GameplaySection:NewDropdown("Выбор снаряжения", "Выберите снаряжение для автопокупки", flatGearOptions, function(selected)
     selectedGear = selected
     Library:Notify("Выбрано снаряжение: " .. selected, 3)
 end)
 
-AutoBuySection:NewToggle("Автопокупка снаряжения", "Автоматически покупает выбранное снаряжение", function(state)
+GameplaySection:NewToggle("Автопокупка снаряжения", "Автоматически покупает выбранное снаряжение", function(state)
     autoBuyGear = state
     if state then
         spawn(function()
@@ -289,13 +303,12 @@ AutoBuySection:NewToggle("Автопокупка снаряжения", "Авт�
     end
 end)
 
--- Автопокупка косметики
-AutoBuySection:NewDropdown("Выбор косметики", "Выберите косметику для автопокупки", flatCosmeticOptions, function(selected)
+GameplaySection:NewDropdown("Выбор косметики", "Выберите косметику для автопокупки", flatCosmeticOptions, function(selected)
     selectedCosmetic = selected
     Library:Notify("Выбрана косметика: " .. selected, 3)
 end)
 
-AutoBuySection:NewToggle("Автопокупка косметики", "Автоматически покупает выбранную косметику", function(state)
+GameplaySection:NewToggle("Автопокупка косметики", "Автоматически покупает выбранную косметику", function(state)
     autoBuyCosmetics = state
     if state then
         spawn(function()
@@ -311,10 +324,50 @@ AutoBuySection:NewToggle("Автопокупка косметики", "Авто�
     end
 end)
 
--- Кнопка сворачивания/разворачивания
-local minimized = false
-SettingsSection:NewButton("Свернуть/Развернуть", "Сворачивает или разворачивает GUI", function()
-    minimized = not minimized
+-- Кастомизация GUI
+CustomizationSection:NewSlider("Прозрачность GUI", "Настройка прозрачности интерфейса", 1, 0, function(value)
+    guiTransparency = value
+    Window.Ui.BackgroundTransparency = value
+    Library:Notify("Прозрачность установлена: " .. tostring(value), 3)
+end)
+
+CustomizationSection:NewSlider("Скорость RGB", "Настройка скорости RGB анимации", 10, 1, function(value)
+    rgbSpeed = value
+    Library:Notify("Скорость RGB: " .. tostring(value), 3)
+end)
+
+CustomizationSection:NewDropdown("Тема GUI", "Выберите тему интерфейса", {"DarkTheme", "LightTheme", "BloodTheme", "GrapeTheme", "OceanTheme"}, function(theme)
+    selectedTheme = theme
+    Window:ChangeTheme(theme)
+    Library:Notify("Тема изменена: " .. theme, 3)
+end)
+
+CustomizationSection:NewToggle("Неоновая подсветка кнопок", "Включает неоновый эффект для кнопок", function(state)
+    if state then
+        for _, button in pairs(Window.Ui:GetDescendants()) do
+            if button:IsA("TextButton") then
+                neonButtonEffect(button)
+            end
+        end
+    end
+end)
+
+CustomizationSection:NewToggle("Динамические тени", "Включает анимированные тени", function(state)
+    if state then
+        local shadow = Instance.new("UIStroke")
+        shadow.Thickness = 3
+        shadow.Color = Color3.fromRGB(255, 255, 255)
+        shadow.Parent = Window.Ui
+        local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+        TweenService:Create(shadow, tweenInfo, {Color = Color3.fromRGB(0, 0, 255)}):Play()
+    else
+        local shadow = Window.Ui:FindFirstChildOfClass("UIStroke")
+        if shadow then shadow:Destroy() end
+    end
+end)
+
+CustomizationSection:NewButton("Свернуть/Развернуть", "Сворачивает или разворачивает GUI", function()
+    local minimized = not Window.Ui.Size.X.Offset == 50
     local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
     if minimized then
         TweenService:Create(Window.Ui, tweenInfo, {Size = UDim2.new(0, 50, 0, 50)}):Play()
@@ -323,10 +376,9 @@ SettingsSection:NewButton("Свернуть/Развернуть", "Сворач
     end
 end)
 
--- Кнопка закрытия
-SettingsSection:NewButton("Закрыть GUI", "Закрывает интерфейс", function()
+CustomizationSection:NewButton("Закрыть GUI", "Закрывает интерфейс", function()
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
-    TweenService:Create(Window.Ui, tweenInfo, {Transparency = 1}):Play()
+    TweenService:Create(Window.Ui, tweenInfo, {BackgroundTransparency = 1}):Play()
     wait(0.3)
     Window:Destroy()
 end)
@@ -355,16 +407,16 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 -- Уведомление при запуске
-Library:Notify("Grow A Garden Script Loaded! AutoBuy Debug Enabled!", 5)
+Library:Notify("Grow A Garden | Perfect GUI Loaded!", 5)
 
--- Анти-обнаружение (минимизация сигнатур)
+-- Анти-обнаружение
 local mt = getrawmetatable(game)
 setreadonly(mt, false)
 local oldnc = mt.__namecall
 mt.__namecall = newcclosure(function(self, ...)
     local method = getnamecallmethod()
     if method == "FireServer" or method == "InvokeServer" then
-        wait(math.random(0.01, 0.05)) -- Случайная задержка для снижения подозрительности
+        wait(math.random(0.01, 0.05))
     end
     return oldnc(self, ...)
 end)

@@ -15,8 +15,8 @@ screenGui.Parent = playerGui
 
 -- Основной контейнер меню
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 450, 0, 350)
-mainFrame.Position = UDim2.new(0.5, -225, 0.5, -175)
+mainFrame.Size = UDim2.new(0, 400, 0, 350)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -175)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 mainFrame.BorderSizePixel = 0
 mainFrame.ClipsDescendants = true
@@ -99,7 +99,6 @@ contentFrame.Parent = mainFrame
 local buttonContainer = Instance.new("Frame")
 buttonContainer.Size = UDim2.new(1, 0, 1, 0)
 buttonContainer.BackgroundTransparency = 1
-buttonContainer.Visible = true
 buttonContainer.Parent = contentFrame
 
 local uiListLayout = Instance.new("UIListLayout")
@@ -107,12 +106,23 @@ uiListLayout.Padding = UDim.new(0, 10)
 uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 uiListLayout.Parent = buttonContainer
 
--- Контейнер для настроек
+-- Боковая вкладка настроек
 local settingsFrame = Instance.new("Frame")
-settingsFrame.Size = UDim2.new(1, 0, 1, 0)
-settingsFrame.BackgroundTransparency = 1
+settingsFrame.Size = UDim2.new(0, 200, 0, 350)
+settingsFrame.Position = UDim2.new(1, 0, 0, 0)
+settingsFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+settingsFrame.BorderSizePixel = 0
 settingsFrame.Visible = false
-settingsFrame.Parent = contentFrame
+settingsFrame.Parent = mainFrame
+
+local settingsCorner = Instance.new("UICorner")
+settingsCorner.CornerRadius = UDim.new(0, 12)
+settingsCorner.Parent = settingsFrame
+
+local settingsStroke = Instance.new("UIStroke")
+settingsStroke.Thickness = 3
+settingsStroke.Color = Color3.fromRGB(255, 255, 255)
+settingsStroke.Parent = settingsFrame
 
 local settingsListLayout = Instance.new("UIListLayout")
 settingsListLayout.Padding = UDim.new(0, 10)
@@ -153,7 +163,8 @@ local rgbModes = {
     Rainbow = function(t) 
         local r = math.sin(t * 0.5) * 127 + 128
         local g = math.sin(t * 0.5 + 2) * 127 + 128
-        local b = math.sin(t * 0.5 + 4) * 127 + 128
+        local b = previousMenu = nil
+math.sin(t * 0.5 + 4) * 127 + 128
         return Color3.fromRGB(r, g, b)
     end,
     Pulse = function(t)
@@ -211,11 +222,12 @@ end
 -- Функция для создания кнопки настроек
 local function createSettingsButton(text, callback)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, 0, 0, 45)
+    button.Size = UDim2.new(1, -20, 0, 45)
+    button.Position = UDim2.new(0, 10, 0, 0)
     button.BackgroundColor3 = currentTheme.Button
     button.Text = text
     button.TextColor3 = currentTheme.Text
-    button.TextSize = 20
+    button.TextSize = 18
     button.Font = Enum.Font.SourceSans
     button.Parent = settingsFrame
 
@@ -282,6 +294,7 @@ end
 local function applyTheme(theme)
     currentTheme = theme
     mainFrame.BackgroundColor3 = theme.Background
+    settingsFrame.BackgroundColor3 = theme.Background
     titleLabel.TextColor3 = theme.Text
     for _, button in pairs(buttonContainer:GetChildren()) do
         if button:IsA("TextButton") then
@@ -301,6 +314,7 @@ end
 local function updateRGB()
     local time = tick()
     uiStroke.Color = currentRGBMode(time)
+    settingsStroke.Color = currentRGBMode(time)
 end
 
 RunService.RenderStepped:Connect(updateRGB)
@@ -310,10 +324,13 @@ local function toggleMenu()
     isMenuOpen = not isMenuOpen
     if isMenuOpen then
         mainFrame.Visible = true
-        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 450, 0, 350)}):Play()
+        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)}):Play()
         showNotification("Menu Opened", Color3.fromRGB(0, 255, 0))
     else
-        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 450, 0, 0)}):Play()
+        if isSettingsOpen then
+            toggleSettings()
+        end
+        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 400, 0, 0)}):Play()
         wait(0.5)
         mainFrame.Visible = false
         showNotification("Menu Closed", Color3.fromRGB(255, 0, 0))
@@ -324,23 +341,33 @@ end
 local function toggleMinimize()
     isMinimized = not isMinimized
     if isMinimized then
-        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 450, 0, 50)}):Play()
+        if isSettingsOpen then
+            toggleSettings()
+        end
+        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 400, 0, 50)}):Play()
         contentFrame.Visible = false
         showNotification("Menu Minimized", Color3.fromRGB(255, 200, 0))
     else
-        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 450, 0, 350)}):Play()
+        TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)}):Play()
         contentFrame.Visible = true
         showNotification("Menu Restored", Color3.fromRGB(0, 255, 0))
     end
 end
 
--- Переключение вкладок
+-- Анимация вкладки настроек
 local function toggleSettings()
     isSettingsOpen = not isSettingsOpen
-    buttonContainer.Visible = not isSettingsOpen
     settingsFrame.Visible = isSettingsOpen
-    titleLabel.Text = isSettingsOpen and "Settings" or "Divine Menu"
-    showNotification(isSettingsOpen and "Settings Opened" or "Main Menu Opened", Color3.fromRGB(0, 200, 255))
+    if isSettingsOpen then
+        settingsFrame.Position = UDim2.new(1, 200, 0, 0)
+        TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = UDim2.new(1, 0, 0, 0)}):Play()
+        showNotification("Settings Opened", Color3.fromRGB(0, 200, 255))
+    else
+        TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Position = UDim2.new(1, 200, 0, 0)}):Play()
+        wait(0.5)
+        settingsFrame.Visible = false
+        showNotification("Settings Closed", Color3.fromRGB(0, 200, 255))
+    end
 end
 
 -- Перетаскивание меню
@@ -378,26 +405,22 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 -- Создание кнопок главного меню
-createButton("Speed Boost", function()
-    player.Character.Humanoid.WalkSpeed = 32
-end)
-
-createButton("Reset Speed", function()
-    player.Character.Humanoid.WalkSpeed = 16
-end)
-
-createButton("Infinite Jump", function()
-    local function onJumpRequest()
-        if player.Character then
-            player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end
-    UserInputService.JumpRequest:Connect(onJumpRequest)
-end)
-
 createButton("Teleport to Center", function()
     if player.Character then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 5, 0))
+    end
+end)
+
+createButton("God Mode", function()
+    if player.Character then
+        player.Character.Humanoid.MaxHealth = math.huge
+        player.Character.Humanoid.Health = math.huge
+    end
+end)
+
+createButton("Reset Character", function()
+    if player.Character then
+        player:LoadCharacter()
     end
 end)
 
@@ -417,4 +440,4 @@ end
 -- Начальная анимация появления
 mainFrame.Size = UDim2.new(0, 0, 0, 0)
 mainFrame.Visible = true
-TweenService:Create(mainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 450, 0, 350)}):Play()
+TweenService:Create(mainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)}):Play()

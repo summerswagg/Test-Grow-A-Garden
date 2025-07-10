@@ -50,16 +50,75 @@ local autoBuySeeds = false
 local autoBuyEggs = false
 local autoBuyGear = false
 local autoBuyCosmetics = false
-local selectedSeed = "BasicSeed"
-local selectedEgg = "BasicEgg"
-local selectedGear = "BasicGear"
-local selectedCosmetic = "BasicCosmetic"
+local selectedSeed = "Carrot"
+local selectedEgg = "CommonEgg"
+local selectedGear = "CommonGear"
+local selectedCosmetic = "CommonCosmetic"
 
--- Списки предметов для автопокупки
-local seedOptions = {"BasicSeed", "RareSeed", "EpicSeed", "LegendarySeed"}
-local eggOptions = {"BasicEgg", "GoldenEgg", "MysticEgg"}
-local gearOptions = {"BasicGear", "AdvancedGear", "ProGear"}
-local cosmeticOptions = {"BasicCosmetic", "CoolHat", "FancyShirt"}
+-- Списки предметов для автопокупки с учетом редкостей
+local seedOptions = {
+    ["Common"] = {"Carrot", "Strawberry", "Blueberry"},
+    ["Uncommon"] = {"Rose", "Orange Tulip", "Tomato"},
+    ["Rare"] = {"Cauliflower", "Raspberry", "Foxglove"},
+    ["Legendary"] = {"Corn", "Paradise Petal", "Watermelon"},
+    ["Mythical"] = {"Avocado", "Green Apple", "Banana"},
+    ["Divine"] = {"Pepper", "Cacao", "Moon Blossom"},
+    ["Prismatic"] = {"Elephant Ears", "Rosy Delight"}
+}
+local flatSeedOptions = {}
+for _, seeds in pairs(seedOptions) do
+    for _, seed in pairs(seeds) do
+        table.insert(flatSeedOptions, seed)
+    end
+end
+
+local eggOptions = {
+    ["Common"] = {"CommonEgg"},
+    ["Uncommon"] = {"UncommonEgg"},
+    ["Rare"] = {"RareEgg"},
+    ["Legendary"] = {"LegendaryEgg"},
+    ["Mythical"] = {"MythicalEgg"},
+    ["Divine"] = {"DivineEgg"},
+    ["Prismatic"] = {"PrismaticEgg"}
+}
+local flatEggOptions = {}
+for _, eggs in pairs(eggOptions) do
+    for _, egg in pairs(eggs) do
+        table.insert(flatEggOptions, egg)
+    end
+end
+
+local gearOptions = {
+    ["Common"] = {"CommonGear"},
+    ["Uncommon"] = {"UncommonGear"},
+    ["Rare"] = {"RareGear"},
+    ["Legendary"] = {"LegendaryGear"},
+    ["Mythical"] = {"MythicalGear"},
+    ["Divine"] = {"DivineGear"},
+    ["Prismatic"] = {"PrismaticGear"}
+}
+local flatGearOptions = {}
+for _, gears in pairs(gearOptions) do
+    for _, gear in pairs(gears) do
+        table.insert(flatGearOptions, gear)
+    end
+end
+
+local cosmeticOptions = {
+    ["Common"] = {"CommonCosmetic"},
+    ["Uncommon"] = {"UncommonCosmetic"},
+    ["Rare"] = {"RareCosmetic"},
+    ["Legendary"] = {"LegendaryCosmetic"},
+    ["Mythical"] = {"MythicalCosmetic"},
+    ["Divine"] = {"DivineCosmetic"},
+    ["Prismatic"] = {"PrismaticCosmetic"}
+}
+local flatCosmeticOptions = {}
+for _, cosmetics in pairs(cosmeticOptions) do
+    for _, cosmetic in pairs(cosmetics) do
+        table.insert(flatCosmeticOptions, cosmetic)
+    end
+end
 
 -- Автопосадка
 MainSection:NewToggle("Автопосадка", "Автоматически сажает растения", function(state)
@@ -118,7 +177,7 @@ MainSection:NewToggle("Бесконечные семена", "Дает беск�
             while infiniteSeeds do
                 local seedCount = Player.PlayerGui.MainGui.SeedsFrame.Seeds.Text
                 if tonumber(seedCount) < 100 then
-                    game:GetService("ReplicatedStorage").Remotes.BuySeeds:FireServer(selectedSeed, 100)
+                    game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Seed", selectedSeed, 100)
                 end
                 wait(2)
             end
@@ -127,7 +186,7 @@ MainSection:NewToggle("Бесконечные семена", "Дает беск�
 end)
 
 -- Автопокупка семян
-AutoBuySection:NewDropdown("Выбор семян", "Выберите семена для автопокупки", seedOptions, function(selected)
+AutoBuySection:NewDropdown("Выбор семян", "Выберите семена для автопокупки", flatSeedOptions, function(selected)
     selectedSeed = selected
 end)
 
@@ -136,7 +195,7 @@ AutoBuySection:NewToggle("Автопокупка семян", "Автомати�
     if state then
         spawn(function()
             while autoBuySeeds do
-                game:GetService("ReplicatedStorage").Remotes.BuySeeds:FireServer(selectedSeed, 10)
+                game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Seed", selectedSeed, 10)
                 wait(5)
             end
         end)
@@ -144,7 +203,7 @@ AutoBuySection:NewToggle("Автопокупка семян", "Автомати�
 end)
 
 -- Автопокупка яиц
-AutoBuySection:NewDropdown("Выбор яиц", "Выберите яйца для автопокупки", eggOptions, function(selected)
+AutoBuySection:NewDropdown("Выбор яиц", "Выберите яйца для автопокупки", flatEggOptions, function(selected)
     selectedEgg = selected
 end)
 
@@ -153,7 +212,7 @@ AutoBuySection:NewToggle("Автопокупка яиц", "Автоматиче�
     if state then
         spawn(function()
             while autoBuyEggs do
-                game:GetService("ReplicatedStorage").Remotes.BuyEgg:FireServer(selectedEgg, 1)
+                game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Egg", selectedEgg, 1)
                 wait(5)
             end
         end)
@@ -161,7 +220,7 @@ AutoBuySection:NewToggle("Автопокупка яиц", "Автоматиче�
 end)
 
 -- Автопокупка снаряжения
-AutoBuySection:NewDropdown("Выбор снаряжения", "Выберите снаряжение для автопокупки", gearOptions, function(selected)
+AutoBuySection:NewDropdown("Выбор снаряжения", "Выберите снаряжение для автопокупки", flatGearOptions, function(selected)
     selectedGear = selected
 end)
 
@@ -170,7 +229,7 @@ AutoBuySection:NewToggle("Автопокупка снаряжения", "Авт�
     if state then
         spawn(function()
             while autoBuyGear do
-                game:GetService("ReplicatedStorage").Remotes.BuyGear:FireServer(selectedGear, 1)
+                game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Gear", selectedGear, 1)
                 wait(5)
             end
         end)
@@ -178,7 +237,7 @@ AutoBuySection:NewToggle("Автопокупка снаряжения", "Авт�
 end)
 
 -- Автопокупка косметики
-AutoBuySection:NewDropdown("Выбор косметики", "Выберите косметику для автопокупки", cosmeticOptions, function(selected)
+AutoBuySection:NewDropdown("Выбор косметики", "Выберите косметику для автопокупки", flatCosmeticOptions, function(selected)
     selectedCosmetic = selected
 end)
 
@@ -187,7 +246,7 @@ AutoBuySection:NewToggle("Автопокупка косметики", "Авто�
     if state then
         spawn(function()
             while autoBuyCosmetics do
-                game:GetService("ReplicatedStorage").Remotes.BuyCosmetic:FireServer(selectedCosmetic, 1)
+                game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Cosmetic", selectedCosmetic, 1)
                 wait(5)
             end
         end)
@@ -238,7 +297,7 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 -- Уведомление при запуске
-Library:Notify("Grow A Garden Script Loaded! Added AutoBuy Features!", 5)
+Library:Notify("Grow A Garden Script Loaded! AutoBuy Fixed!", 5)
 
 -- Анти-обнаружение (минимизация сигнатур)
 local mt = getrawmetatable(game)

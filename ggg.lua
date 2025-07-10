@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -44,7 +45,7 @@ titleLabel.TextSize = 28
 titleLabel.Font = Enum.Font.SourceSansBold
 titleLabel.Parent = mainFrame
 
--- Кнопка сворачивания/закрытия
+-- Кнопки управления
 local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0, 35, 0, 35)
 closeButton.Position = UDim2.new(1, -45, 0, 7.5)
@@ -96,9 +97,11 @@ contentFrame.ClipsDescendants = true
 contentFrame.Parent = mainFrame
 
 -- Контейнер для кнопок
-local buttonContainer = Instance.new("Frame")
+local buttonContainer = Instance.new("ScrollingFrame")
 buttonContainer.Size = UDim2.new(1, 0, 1, 0)
 buttonContainer.BackgroundTransparency = 1
+buttonContainer.ScrollBarThickness = 5
+buttonContainer.CanvasSize = UDim2.new(0, 0, 0, 300)
 buttonContainer.Parent = contentFrame
 
 local uiListLayout = Instance.new("UIListLayout")
@@ -109,7 +112,7 @@ uiListLayout.Parent = buttonContainer
 -- Боковая вкладка настроек
 local settingsFrame = Instance.new("Frame")
 settingsFrame.Size = UDim2.new(0, 200, 0, 350)
-settingsFrame.Position = UDim2.new(1, 0, 0, 0)
+settingsFrame.Position = UDim2.new(1, 200, 0, 0)
 settingsFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 settingsFrame.BorderSizePixel = 0
 settingsFrame.Visible = false
@@ -123,6 +126,8 @@ local settingsStroke = Instance.new("UIStroke")
 settingsStroke.Thickness = 3
 settingsStroke.Color = Color3.fromRGB(255, 255, 255)
 settingsStroke.Parent = settingsFrame
+
+local settingsScrollcredible
 
 local settingsListLayout = Instance.new("UIListLayout")
 settingsListLayout.Padding = UDim.new(0, 10)
@@ -163,8 +168,7 @@ local rgbModes = {
     Rainbow = function(t) 
         local r = math.sin(t * 0.5) * 127 + 128
         local g = math.sin(t * 0.5 + 2) * 127 + 128
-        local b = previousMenu = nil
-math.sin(t * 0.5 + 4) * 127 + 128
+        local b = math.sin(t * 0.5 + 4) * 127 + 128
         return Color3.fromRGB(r, g, b)
     end,
     Pulse = function(t)
@@ -191,7 +195,7 @@ local currentRGBMode = rgbModes.Rainbow
 -- Функция для создания кнопки
 local function createButton(text, callback)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, 0, 0, 45)
+    button.Size = UDim2.new(1, -10, 0, 45)
     button.BackgroundColor3 = currentTheme.Button
     button.Text = text
     button.TextColor3 = currentTheme.Text
@@ -216,7 +220,8 @@ local function createButton(text, callback)
         TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = currentTheme.Button}):Play()
     end)
 
-    return button
+    -- Обновление CanvasSize
+    buttonContainer.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 20)
 end
 
 -- Функция для создания кнопки настроек
@@ -408,6 +413,7 @@ end)
 createButton("Teleport to Center", function()
     if player.Character then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 5, 0))
+        showNotification("Teleported to center", Color3.fromRGB(0, 255, 0))
     end
 end)
 
@@ -415,12 +421,40 @@ createButton("God Mode", function()
     if player.Character then
         player.Character.Humanoid.MaxHealth = math.huge
         player.Character.Humanoid.Health = math.huge
+        showNotification("God Mode enabled", Color3.fromRGB(0, 255, 0))
     end
 end)
 
 createButton("Reset Character", function()
     if player.Character then
         player:LoadCharacter()
+        showNotification("Character reset", Color3.fromRGB(0, 255, 0))
+    end
+end)
+
+createButton("Night Vision", function()
+    local nightVision = Instance.new("ColorCorrectionEffect")
+    nightVision.Brightness = 0.1
+    nightVision.Contrast = 0.2
+    nightVision.Saturation = 0.1
+    nightVision.TintColor = Color3.fromRGB(200, 255, 200)
+    nightVision.Parent = Lighting
+    showNotification("Night Vision enabled", Color3.fromRGB(0, 255, 0))
+end)
+
+createButton("Clear Lighting Effects", function()
+    for _, effect in pairs(Lighting:GetChildren()) do
+        if effect:IsA("ColorCorrectionEffect") then
+            effect:Destroy()
+        end
+    end
+    showNotification("Lighting effects cleared", Color3.fromRGB(0, 255, 0))
+end)
+
+createButton("High Jump", function()
+    if player.Character then
+        player.Character.Humanoid.JumpPower = 100
+        showNotification("High Jump enabled", Color3.fromRGB(0, 255, 0))
     end
 end)
 
@@ -441,3 +475,4 @@ end
 mainFrame.Size = UDim2.new(0, 0, 0, 0)
 mainFrame.Visible = true
 TweenService:Create(mainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 350)}):Play()
+showNotification("Welcome to Divine Menu!", Color3.fromRGB(0, 200, 255))

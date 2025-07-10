@@ -8,6 +8,7 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Создание главного окна
 local MainTab = Window:NewTab("Основное")
@@ -120,6 +121,24 @@ for _, cosmetics in pairs(cosmeticOptions) do
     end
 end
 
+-- Функция проверки валюты
+local function getPlayerMoney()
+    local money = Player:FindFirstChild("leaderstats") and Player.leaderstats:FindFirstChild("Money")
+    return money and tonumber(money.Value) or 0
+end
+
+-- Функция покупки с отладкой
+local function purchaseItem(itemType, itemName, amount)
+    local success, result = pcall(function()
+        ReplicatedStorage.Remotes.PurchaseItem:FireServer({Type = itemType, Item = itemName, Amount = amount})
+    end)
+    if success then
+        Library:Notify("Покупка: " .. itemType .. " - " .. itemName .. " (x" .. amount .. ")", 3)
+    else
+        Library:Notify("Ошибка покупки " .. itemType .. ": " .. tostring(result), 5)
+    end
+end
+
 -- Автопосадка
 MainSection:NewToggle("Автопосадка", "Автоматически сажает растения", function(state)
     autoPlant = state
@@ -129,7 +148,12 @@ MainSection:NewToggle("Автопосадка", "Автоматически са
                 local plots = game.Workspace.Plots:GetChildren()
                 for _, plot in pairs(plots) do
                     if plot:IsA("Model") and plot:FindFirstChild("Plant") == nil then
-                        game:GetService("ReplicatedStorage").Remotes.PlantSeed:FireServer(plot, selectedSeed)
+                        local success, result = pcall(function()
+                            ReplicatedStorage.Remotes.PlantSeed:FireServer(plot, selectedSeed)
+                        end)
+                        if not success then
+                            Library:Notify("Ошибка посадки: " .. tostring(result), 5)
+                        end
                     end
                 end
                 wait(0.5)
@@ -147,7 +171,12 @@ MainSection:NewToggle("Автосбор", "Автоматически собир
                 local plants = game.Workspace.Plants:GetChildren()
                 for _, plant in pairs(plants) do
                     if plant:IsA("Model") and plant:FindFirstChild("Maturity") and plant.Maturity.Value >= 100 then
-                        game:GetService("ReplicatedStorage").Remotes.HarvestPlant:FireServer(plant)
+                        local success, result = pcall(function()
+                            ReplicatedStorage.Remotes.HarvestPlant:FireServer(plant)
+                        end)
+                        if not success then
+                            Library:Notify("Ошибка сбора: " .. tostring(result), 5)
+                        end
                     end
                 end
                 wait(0.3)
@@ -162,7 +191,12 @@ MainSection:NewToggle("Автопродажа", "Автоматически пр
     if state then
         spawn(function()
             while autoSell do
-                game:GetService("ReplicatedStorage").Remotes.SellAll:FireServer()
+                local success, result = pcall(function()
+                    ReplicatedStorage.Remotes.SellAll:FireServer()
+                end)
+                if not success then
+                    Library:Notify("Ошибка продажи: " .. tostring(result), 5)
+                end
                 wait(1)
             end
         end)
@@ -177,7 +211,11 @@ MainSection:NewToggle("Бесконечные семена", "Дает беск�
             while infiniteSeeds do
                 local seedCount = Player.PlayerGui.MainGui.SeedsFrame.Seeds.Text
                 if tonumber(seedCount) < 100 then
-                    game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Seed", selectedSeed, 100)
+                    if getPlayerMoney() >= 100 then
+                        purchaseItem("Seed", selectedSeed, 100)
+                    else
+                        Library:Notify("Недостаточно денег для покупки семян!", 5)
+                    end
                 end
                 wait(2)
             end
@@ -188,6 +226,7 @@ end)
 -- Автопокупка семян
 AutoBuySection:NewDropdown("Выбор семян", "Выберите семена для автопокупки", flatSeedOptions, function(selected)
     selectedSeed = selected
+    Library:Notify("Выбрано семя: " .. selected, 3)
 end)
 
 AutoBuySection:NewToggle("Автопокупка семян", "Автоматически покупает выбранные семена", function(state)
@@ -195,7 +234,11 @@ AutoBuySection:NewToggle("Автопокупка семян", "Автомати�
     if state then
         spawn(function()
             while autoBuySeeds do
-                game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Seed", selectedSeed, 10)
+                if getPlayerMoney() >= 50 then
+                    purchaseItem("Seed", selectedSeed, 10)
+                else
+                    Library:Notify("Недостаточно денег для покупки семян!", 5)
+                end
                 wait(5)
             end
         end)
@@ -205,6 +248,7 @@ end)
 -- Автопокупка яиц
 AutoBuySection:NewDropdown("Выбор яиц", "Выберите яйца для автопокупки", flatEggOptions, function(selected)
     selectedEgg = selected
+    Library:Notify("Выбрано яйцо: " .. selected, 3)
 end)
 
 AutoBuySection:NewToggle("Автопокупка яиц", "Автоматически покупает выбранные яйца", function(state)
@@ -212,7 +256,11 @@ AutoBuySection:NewToggle("Автопокупка яиц", "Автоматиче�
     if state then
         spawn(function()
             while autoBuyEggs do
-                game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Egg", selectedEgg, 1)
+                if getPlayerMoney() >= 100 then
+                    purchaseItem("Egg", selectedEgg, 1)
+                else
+                    Library:Notify("Недостаточно денег для покупки яиц!", 5)
+                end
                 wait(5)
             end
         end)
@@ -222,6 +270,7 @@ end)
 -- Автопокупка снаряжения
 AutoBuySection:NewDropdown("Выбор снаряжения", "Выберите снаряжение для автопокупки", flatGearOptions, function(selected)
     selectedGear = selected
+    Library:Notify("Выбрано снаряжение: " .. selected, 3)
 end)
 
 AutoBuySection:NewToggle("Автопокупка снаряжения", "Автоматически покупает выбранное снаряжение", function(state)
@@ -229,7 +278,11 @@ AutoBuySection:NewToggle("Автопокупка снаряжения", "Авт�
     if state then
         spawn(function()
             while autoBuyGear do
-                game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Gear", selectedGear, 1)
+                if getPlayerMoney() >= 200 then
+                    purchaseItem("Gear", selectedGear, 1)
+                else
+                    Library:Notify("Недостаточно денег для покупки снаряжения!", 5)
+                end
                 wait(5)
             end
         end)
@@ -239,6 +292,7 @@ end)
 -- Автопокупка косметики
 AutoBuySection:NewDropdown("Выбор косметики", "Выберите косметику для автопокупки", flatCosmeticOptions, function(selected)
     selectedCosmetic = selected
+    Library:Notify("Выбрана косметика: " .. selected, 3)
 end)
 
 AutoBuySection:NewToggle("Автопокупка косметики", "Автоматически покупает выбранную косметику", function(state)
@@ -246,7 +300,11 @@ AutoBuySection:NewToggle("Автопокупка косметики", "Авто�
     if state then
         spawn(function()
             while autoBuyCosmetics do
-                game:GetService("ReplicatedStorage").Remotes.BuyItem:FireServer("Cosmetic", selectedCosmetic, 1)
+                if getPlayerMoney() >= 150 then
+                    purchaseItem("Cosmetic", selectedCosmetic, 1)
+                else
+                    Library:Notify("Недостаточно денег для покупки косметики!", 5)
+                end
                 wait(5)
             end
         end)
@@ -297,7 +355,7 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 -- Уведомление при запуске
-Library:Notify("Grow A Garden Script Loaded! AutoBuy Fixed!", 5)
+Library:Notify("Grow A Garden Script Loaded! AutoBuy Debug Enabled!", 5)
 
 -- Анти-обнаружение (минимизация сигнатур)
 local mt = getrawmetatable(game)

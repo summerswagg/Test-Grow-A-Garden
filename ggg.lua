@@ -1,205 +1,128 @@
---!strict
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
 
--- Подключение библиотек (предполагается, что Roact и RoactSpring установлены в ReplicatedStorage)
-local Roact = require(ReplicatedStorage.Roact)
-local RoactSpring = require(ReplicatedStorage.RoactSpring)
-
--- Компонент главного меню
-local MainMenu = Roact.Component:extend("MainMenu")
-
-function MainMenu:init()
-	self:setState({
-		isVisible = false,
-		notification = "",
-	})
-
-	-- Конфигурации для анимаций
-	self.springConfigs = {
-		bounce = { damping = 0.7, mass = 1, stiffness = 120 }, -- Пружинящий эффект
-		scale = { damping = 1, mass = 1, stiffness = 200 }, -- Масштабирование кнопок
-	}
-end
-
-function MainMenu:render()
-	local styles = RoactSpring.useSpring(self.springConfigs.bounce, {
-		transparency = self.state.isVisible and 0 or 1,
-		position = self.state.isVisible and UDim2.new(0.5, -200, 0.5, -150) or UDim2.new(0.5, -200, 0, -300),
-	})
-
-	local buttonStyles = RoactSpring.useSpring(self.springConfigs.scale, {
-		scale = self.state.isVisible and 1 or 0,
-	})
-
-	local notificationStyles = RoactSpring.useSpring(self.springConfigs.bounce, {
-		transparency = self.state.notification ~= "" and 0 or 1,
-		position = self.state.notification ~= "" and UDim2.new(1, -220, 1, -60) or UDim2.new(1, -220, 1, -20),
-	})
-
-	return Roact.createElement("ScreenGui", {
-		ResetOnSpawn = false,
-	}, {
-		MainFrame = Roact.createElement("Frame", {
-			Size = UDim2.new(0, 400, 0, 300),
-			Position = styles.position,
-			BackgroundColor3 = Color3.fromRGB(30, 30, 46),
-			BackgroundTransparency = styles.transparency,
-			BorderSizePixel = 0,
-			ClipsDescendants = true,
-		}, {
-			UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 15) }),
-			UIGradient = Roact.createElement("UIGradient", {
-				Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 46)),
-					ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 80)),
-				}),
-				Rotation = 45,
-			}),
-			Header = Roact.createElement("TextLabel", {
-				Size = UDim2.new(1, 0, 0, 60),
-				BackgroundTransparency = 1,
-				Text = "Главное Меню",
-				TextColor3 = Color3.fromRGB(0, 255, 136),
-				TextSize = 28,
-				Font = Enum.Font.GothamBlack,
-				TextStrokeTransparency = 0.7,
-				TextStrokeColor3 = Color3.fromRGB(0, 0, 0),
-			}),
-			ButtonContainer = Roact.createElement("Frame", {
-				Size = UDim2.new(0.9, 0, 0, 200),
-				Position = UDim2.new(0.05, 0, 0, 80),
-				BackgroundTransparency = 1,
-			}, {
-				UIListLayout = Roact.createElement("UIListLayout", {
-					FillDirection = Enum.FillDirection.Vertical,
-					HorizontalAlignment = Enum.HorizontalAlignment.Center,
-					Padding = UDim.new(0, 15),
-				}),
-				PlayButton = Roact.createElement("TextButton", {
-					Size = UDim2.new(0, 200, 0, 50),
-					BackgroundColor3 = Color3.fromRGB(0, 255, 136),
-					TextColor3 = Color3.fromRGB(30, 30, 46),
-					TextSize = 18,
-					Font = Enum.Font.GothamBold,
-					Text = "Играть",
-					Scale = buttonStyles.scale,
-					[Roact.Event.MouseButton1Click] = function()
-						self:setState({ notification = "Игра началась!" })
-						-- Логика для старта игры
-					end,
-					[Roact.Event.MouseEnter] = function(rbx)
-						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(0, 204, 255) })
-					end,
-					[Roact.Event.MouseLeave] = function(rbx)
-						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(0, 255, 136) })
-					end,
-				}, {
-					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 10) }),
-					UIGradient = Roact.createElement("UIGradient", {
-						Color = ColorSequence.new({
-							ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 136)),
-							ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 204, 255)),
-						}),
-					}),
-				}),
-				SettingsButton = Roact.createElement("TextButton", {
-					Size = UDim2.new(0, 200, 0, 50),
-					BackgroundColor3 = Color3.fromRGB(0, 255, 136),
-					TextColor3 = Color3.fromRGB(30, 30, 46),
-					TextSize = 18,
-					Font = Enum.Font.GothamBold,
-					Text = "Настройки",
-					Scale = buttonStyles.scale,
-					[Roact.Event.MouseButton1Click] = function()
-						self:setState({ notification = "Открыты настройки!" })
-						-- Логика для настроек
-					end,
-					[Roact.Event.MouseEnter] = function(rbx)
-						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(0, 204, 255) })
-					end,
-					[Roact.Event.MouseLeave] = function(rbx)
-						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(0, 255, 136) })
-					},
-				}, {
-					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 10) }),
-					UIGradient = Roact.createElement("UIGradient", {
-						Color = ColorSequence.new({
-							ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 136)),
-							ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 204, 255)),
-						}),
-					}),
-				}),
-				ExitButton = Roact.createElement("TextButton", {
-					Size = UDim2.new(0, 200, 0, 50),
-					BackgroundColor3 = Color3.fromRGB(255, 77, 77),
-					TextColor3 = Color3.fromRGB(30, 30, 46),
-					TextSize = 18,
-					Font = Enum.Font.GothamBold,
-					Text = "Выход",
-					Scale = buttonStyles.scale,
-					[Roact.Event.MouseButton1Click] = function()
-						self:setState({ notification = "Выход из игры!" })
-						-- Логика для выхода
-						game:Shutdown()
-					end,
-					[Roact.Event.MouseEnter] = function(rbx)
-						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(255, 128, 128) })
-					end,
-					[Roact.Event.MouseLeave] = function(rbx)
-						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(255, 77, 77) })
-					end,
-				}, {
-					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 10) }),
-					UIGradient = Roact.createElement("UIGradient", {
-						Color = ColorSequence.new({
-							ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 77, 77)),
-							ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 128, 128)),
-						}),
-					}),
-				}),
-			}),
-		}),
-		Notification = Roact.createElement("TextLabel", {
-			Size = UDim2.new(0, 200, 0, 40),
-			Position = notificationStyles.position,
-			BackgroundColor3 = Color3.fromRGB(0, 255, 136),
-			TextColor3 = Color3.fromRGB(30, 30, 46),
-			TextSize = 14,
-			Font = Enum.Font.Gotham,
-			Text = self.state.notification,
-			BackgroundTransparency = notificationStyles.transparency,
-			Visible = self.state.notification ~= "",
-			[Roact.Event.AncestryChanged] = function()
-				if self.state.notification ~= "" then
-					task.wait(2)
-					self:setState({ notification = "" })
-				end
-			end,
-		}, {
-			UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 5) }),
-		}),
-	})
-end
-
-function MainMenu:didMount()
-	-- Начальная анимация
-	self:setState({ isVisible = true })
-end
-
--- Монтирование компонента
 local player = Players.LocalPlayer
-local playerGui = player.PlayerGui
-local handle = Roact.mount(Roact.createElement(MainMenu), playerGui, "MainMenu")
+local playerGui = player:WaitForChild("PlayerGui")
 
--- Показ/скрытие меню по клавише M
+-- Создаем ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+screenGui.Name = "MainMenu"
+screenGui.ResetOnSpawn = false
+
+-- Основной фрейм меню
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0.4, 0, 0.5, 0)
+mainFrame.Position = UDim2.new(0.3, 0, -0.5, 0) -- Изначально вне экрана
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+-- Добавляем уголки и тень
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 10)
+uiCorner.Parent = mainFrame
+
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Color = Color3.fromRGB(100, 100, 100)
+uiStroke.Thickness = 2
+uiStroke.Parent = mainFrame
+
+-- Заголовок меню
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0.2, 0)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Main Menu"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Parent = mainFrame
+
+-- Функция создания кнопки
+local function createButton(text, yPos, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.8, 0, 0.15, 0)
+    button.Position = UDim2.new(0.1, 0, yPos, 0)
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextScaled = true
+    button.Font = Enum.Font.Gotham
+    button.Parent = mainFrame
+
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 8)
+    buttonCorner.Parent = button
+
+    local buttonStroke = Instance.new("UIStroke")
+    buttonStroke.Color = Color3.fromRGB(150, 150, 150)
+    buttonStroke.Thickness = 1
+    buttonStroke.Parent = button
+
+    -- Анимации кнопки
+    local hoverTweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local clickTweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, hoverTweenInfo, {
+            BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+            Size = UDim2.new(0.82, 0, 0.16, 0)
+        }):Play()
+    end)
+
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, hoverTweenInfo, {
+            BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+            Size = UDim2.new(0.8, 0, 0.15, 0)
+        }):Play()
+    end)
+
+    button.MouseButton1Down:Connect(function()
+        TweenService:Create(button, clickTweenInfo, {
+            Size = UDim2.new(0.78, 0, 0.14, 0)
+        }):Play()
+    end)
+
+    button.MouseButton1Up:Connect(function()
+        TweenService:Create(button, clickTweenInfo, {
+            Size = UDim2.new(0.82, 0, 0.16, 0)
+        }):Play()
+        callback()
+    end)
+
+    return button
+end
+
+-- Анимация появления меню
+local appearTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+TweenService:Create(mainFrame, appearTweenInfo, {
+    Position = UDim2.new(0.3, 0, 0.25, 0)
+}):Play()
+
+-- Создаем кнопки
+local playButton = createButton("Play", 0.3, function()
+    print("Play button clicked!")
+    -- Здесь можно добавить логику начала игры
+end)
+
+local settingsButton = createButton("Settings", 0.5, function()
+    print("Settings button clicked!")
+    -- Здесь можно добавить открытие настроек
+end)
+
+local quitButton = createButton("Quit", 0.7, function()
+    game:Shutdown()
+end)
+
+-- Горячая клавиша для показа/скрытия меню
+local menuVisible = true
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	if input.KeyCode == Enum.KeyCode.M then
-		local currentState = Roact.getElementByHandle(handle).state.isVisible
-		Roact.update(handle, Roact.createElement(MainMenu, {
-			isVisible = not currentState,
-		}))
-	end
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.M then
+        menuVisible = not menuVisible
+        local targetPos = menuVisible and UDim2.new(0.3, 0, 0.25, 0) or UDim2.new(0.3, 0, -0.5, 0)
+        TweenService:Create(mainFrame, appearTweenInfo, {Position = targetPos}):Play()
+    end
 end)

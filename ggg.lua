@@ -12,6 +12,8 @@ local RunService = game:GetService("RunService")
 -- Создание главного окна
 local MainTab = Window:NewTab("Основное")
 local MainSection = MainTab:NewSection("Автоматизация для Grow A Garden")
+local AutoBuyTab = Window:NewTab("Автопокупка")
+local AutoBuySection = AutoBuyTab:NewSection("Настройки автопокупки")
 local SettingsTab = Window:NewTab("Настройки")
 local SettingsSection = SettingsTab:NewSection("Управление GUI")
 
@@ -44,6 +46,20 @@ local autoPlant = false
 local autoCollect = false
 local autoSell = false
 local infiniteSeeds = false
+local autoBuySeeds = false
+local autoBuyEggs = false
+local autoBuyGear = false
+local autoBuyCosmetics = false
+local selectedSeed = "BasicSeed"
+local selectedEgg = "BasicEgg"
+local selectedGear = "BasicGear"
+local selectedCosmetic = "BasicCosmetic"
+
+-- Списки предметов для автопокупки
+local seedOptions = {"BasicSeed", "RareSeed", "EpicSeed", "LegendarySeed"}
+local eggOptions = {"BasicEgg", "GoldenEgg", "MysticEgg"}
+local gearOptions = {"BasicGear", "AdvancedGear", "ProGear"}
+local cosmeticOptions = {"BasicCosmetic", "CoolHat", "FancyShirt"}
 
 -- Автопосадка
 MainSection:NewToggle("Автопосадка", "Автоматически сажает растения", function(state)
@@ -54,7 +70,7 @@ MainSection:NewToggle("Автопосадка", "Автоматически са
                 local plots = game.Workspace.Plots:GetChildren()
                 for _, plot in pairs(plots) do
                     if plot:IsA("Model") and plot:FindFirstChild("Plant") == nil then
-                        game:GetService("ReplicatedStorage").Remotes.PlantSeed:FireServer(plot, "BasicSeed")
+                        game:GetService("ReplicatedStorage").Remotes.PlantSeed:FireServer(plot, selectedSeed)
                     end
                 end
                 wait(0.5)
@@ -102,9 +118,77 @@ MainSection:NewToggle("Бесконечные семена", "Дает беск�
             while infiniteSeeds do
                 local seedCount = Player.PlayerGui.MainGui.SeedsFrame.Seeds.Text
                 if tonumber(seedCount) < 100 then
-                    game:GetService("ReplicatedStorage").Remotes.BuySeeds:FireServer("BasicSeed", 100)
+                    game:GetService("ReplicatedStorage").Remotes.BuySeeds:FireServer(selectedSeed, 100)
                 end
                 wait(2)
+            end
+        end)
+    end
+end)
+
+-- Автопокупка семян
+AutoBuySection:NewDropdown("Выбор семян", "Выберите семена для автопокупки", seedOptions, function(selected)
+    selectedSeed = selected
+end)
+
+AutoBuySection:NewToggle("Автопокупка семян", "Автоматически покупает выбранные семена", function(state)
+    autoBuySeeds = state
+    if state then
+        spawn(function()
+            while autoBuySeeds do
+                game:GetService("ReplicatedStorage").Remotes.BuySeeds:FireServer(selectedSeed, 10)
+                wait(5)
+            end
+        end)
+    end
+end)
+
+-- Автопокупка яиц
+AutoBuySection:NewDropdown("Выбор яиц", "Выберите яйца для автопокупки", eggOptions, function(selected)
+    selectedEgg = selected
+end)
+
+AutoBuySection:NewToggle("Автопокупка яиц", "Автоматически покупает выбранные яйца", function(state)
+    autoBuyEggs = state
+    if state then
+        spawn(function()
+            while autoBuyEggs do
+                game:GetService("ReplicatedStorage").Remotes.BuyEgg:FireServer(selectedEgg, 1)
+                wait(5)
+            end
+        end)
+    end
+end)
+
+-- Автопокупка снаряжения
+AutoBuySection:NewDropdown("Выбор снаряжения", "Выберите снаряжение для автопокупки", gearOptions, function(selected)
+    selectedGear = selected
+end)
+
+AutoBuySection:NewToggle("Автопокупка снаряжения", "Автоматически покупает выбранное снаряжение", function(state)
+    autoBuyGear = state
+    if state then
+        spawn(function()
+            while autoBuyGear do
+                game:GetService("ReplicatedStorage").Remotes.BuyGear:FireServer(selectedGear, 1)
+                wait(5)
+            end
+        end)
+    end
+end)
+
+-- Автопокупка косметики
+AutoBuySection:NewDropdown("Выбор косметики", "Выберите косметику для автопокупки", cosmeticOptions, function(selected)
+    selectedCosmetic = selected
+end)
+
+AutoBuySection:NewToggle("Автопокупка косметики", "Автоматически покупает выбранную косметику", function(state)
+    autoBuyCosmetics = state
+    if state then
+        spawn(function()
+            while autoBuyCosmetics do
+                game:GetService("ReplicatedStorage").Remotes.BuyCosmetic:FireServer(selectedCosmetic, 1)
+                wait(5)
             end
         end)
     end
@@ -154,7 +238,7 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 -- Уведомление при запуске
-Library:Notify("Grow A Garden Script Loaded!", 3)
+Library:Notify("Grow A Garden Script Loaded! Added AutoBuy Features!", 5)
 
 -- Анти-обнаружение (минимизация сигнатур)
 local mt = getrawmetatable(game)

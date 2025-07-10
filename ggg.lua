@@ -3,28 +3,27 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 
--- Подключение библиотек (предполагается, что они установлены в ReplicatedStorage)
+-- Подключение библиотек (предполагается, что Roact и RoactSpring установлены в ReplicatedStorage)
 local Roact = require(ReplicatedStorage.Roact)
 local RoactSpring = require(ReplicatedStorage.RoactSpring)
 
 -- Компонент главного меню
-local DeltaExecutorMenu = Roact.Component:extend("DeltaExecutorMenu")
+local MainMenu = Roact.Component:extend("MainMenu")
 
-function DeltaExecutorMenu:init()
+function MainMenu:init()
 	self:setState({
 		isVisible = false,
-		scriptText = "",
 		notification = "",
 	})
 
-	-- Ссылки для анимаций
+	-- Конфигурации для анимаций
 	self.springConfigs = {
-		bounce = { damping = 0.8, mass = 1, stiffness = 100 },
-		scale = { damping = 1, mass = 1, stiffness = 200 },
+		bounce = { damping = 0.7, mass = 1, stiffness = 120 }, -- Пружинящий эффект
+		scale = { damping = 1, mass = 1, stiffness = 200 }, -- Масштабирование кнопок
 	}
 end
 
-function DeltaExecutorMenu:render()
+function MainMenu:render()
 	local styles = RoactSpring.useSpring(self.springConfigs.bounce, {
 		transparency = self.state.isVisible and 0 or 1,
 		position = self.state.isVisible and UDim2.new(0.5, -200, 0.5, -150) or UDim2.new(0.5, -200, 0, -300),
@@ -51,101 +50,114 @@ function DeltaExecutorMenu:render()
 			ClipsDescendants = true,
 		}, {
 			UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 15) }),
-			Header = Roact.createElement("TextLabel", {
-				Size = UDim2.new(1, 0, 0, 50),
-				BackgroundTransparency = 1,
-				Text = "Delta Executor",
-				TextColor3 = Color3.fromRGB(0, 255, 136),
-				TextSize = 24,
-				Font = Enum.Font.GothamBold,
-				TextStrokeTransparency = 0.8,
+			UIGradient = Roact.createElement("UIGradient", {
+				Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 46)),
+					ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 80)),
+				}),
+				Rotation = 45,
 			}),
-			ScriptInput = Roact.createElement("TextBox", {
-				Size = UDim2.new(0.9, 0, 0, 100),
-				Position = UDim2.new(0.05, 0, 0, 60),
-				BackgroundColor3 = Color3.fromRGB(42, 42, 74),
-				TextColor3 = Color3.fromRGB(255, 255, 255),
-				TextSize = 14,
-				Font = Enum.Font.Code,
-				PlaceholderText = "Введите ваш Lua скрипт...",
-				Text = self.state.scriptText,
-				MultiLine = true,
-				ClearTextOn CommaSeparatedValues = false,
-				[Roact.Change.Text] = function(newText)
-					self:setState({FillingStation({ scriptText = newText })
-				end,
-			}, {
-				UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 10) }),
+			Header = Roact.createElement("TextLabel", {
+				Size = UDim2.new(1, 0, 0, 60),
+				BackgroundTransparency = 1,
+				Text = "Главное Меню",
+				TextColor3 = Color3.fromRGB(0, 255, 136),
+				TextSize = 28,
+				Font = Enum.Font.GothamBlack,
+				TextStrokeTransparency = 0.7,
+				TextStrokeColor3 = Color3.fromRGB(0, 0, 0),
 			}),
 			ButtonContainer = Roact.createElement("Frame", {
-				Size = UDim2.new(0.9, 0, 0, 100),
-				Position = UDim2.new(0.05, 0, 0, 170),
+				Size = UDim2.new(0.9, 0, 0, 200),
+				Position = UDim2.new(0.05, 0, 0, 80),
 				BackgroundTransparency = 1,
 			}, {
 				UIListLayout = Roact.createElement("UIListLayout", {
-					FillDirection = Enum.FillDirection.Horizontal,
+					FillDirection = Enum.FillDirection.Vertical,
 					HorizontalAlignment = Enum.HorizontalAlignment.Center,
-					Padding = UDim.new(0, 10),
+					Padding = UDim.new(0, 15),
 				}),
-				ExecuteButton = Roact.createElement("TextButton", {
-					Size = UDim2.new(0, 80, 0, 40),
+				PlayButton = Roact.createElement("TextButton", {
+					Size = UDim2.new(0, 200, 0, 50),
 					BackgroundColor3 = Color3.fromRGB(0, 255, 136),
 					TextColor3 = Color3.fromRGB(30, 30, 46),
-					TextSize = 14,
+					TextSize = 18,
 					Font = Enum.Font.GothamBold,
-					Text = "Выполнить",
-					[Roact.MouseButton1Click] = function()
-						if self.state.scriptText ~= "" then
-							self:setState({ notification = "Скрипт выполнен!" })
-							-- Здесь можно добавить логику для инжекта скрипта
-						else
-							self:setState({ notification = "Введите скрипт!" })
-						end
+					Text = "Играть",
+					Scale = buttonStyles.scale,
+					[Roact.Event.MouseButton1Click] = function()
+						self:setState({ notification = "Игра началась!" })
+						-- Логика для старта игры
 					end,
-					[Roact.MouseEnter] = function()
-						-- Анимация наведения через RoactSpring
+					[Roact.Event.MouseEnter] = function(rbx)
+						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(0, 204, 255) })
+					end,
+					[Roact.Event.MouseLeave] = function(rbx)
+						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(0, 255, 136) })
 					end,
 				}, {
-					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 8) }),
+					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 10) }),
+					UIGradient = Roact.createElement("UIGradient", {
+						Color = ColorSequence.new({
+							ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 136)),
+							ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 204, 255)),
+						}),
+					}),
 				}),
-				ClearButton = Roact.createElement("TextButton", {
-					Size = UDim2.new(0, 80, 0, 40),
+				SettingsButton = Roact.createElement("TextButton", {
+					Size = UDim2.new(0, 200, 0, 50),
 					BackgroundColor3 = Color3.fromRGB(0, 255, 136),
 					TextColor3 = Color3.fromRGB(30, 30, 46),
-					TextSize = 14,
+					TextSize = 18,
 					Font = Enum.Font.GothamBold,
-					Text = "Очистить",
-					[Roact.MouseButton1Click] = function()
-						self:setState({ scriptText = "", notification = "Поле очищено!" })
+					Text = "Настройки",
+					Scale = buttonStyles.scale,
+					[Roact.Event.MouseButton1Click] = function()
+						self:setState({ notification = "Открыты настройки!" })
+						-- Логика для настроек
 					end,
+					[Roact.Event.MouseEnter] = function(rbx)
+						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(0, 204, 255) })
+					end,
+					[Roact.Event.MouseLeave] = function(rbx)
+						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(0, 255, 136) })
+					},
 				}, {
-					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 8) }),
+					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 10) }),
+					UIGradient = Roact.createElement("UIGradient", {
+						Color = ColorSequence.new({
+							ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 136)),
+							ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 204, 255)),
+						}),
+					}),
 				}),
-				LoadButton = Roact.createElement("TextButton", {
-					Size = UDim2.new(0, 80, 0, 40),
-					BackgroundColor3 = Color3.fromRGB(0, 255, 136),
+				ExitButton = Roact.createElement("TextButton", {
+					Size = UDim2.new(0, 200, 0, 50),
+					BackgroundColor3 = Color3.fromRGB(255, 77, 77),
 					TextColor3 = Color3.fromRGB(30, 30, 46),
-					TextSize = 14,
+					TextSize = 18,
 					Font = Enum.Font.GothamBold,
-					Text = "Загрузить",
-					[Roact.MouseButton1Click] = function()
-						self:setState({ notification = "Скрипт загружен!" })
+					Text = "Выход",
+					Scale = buttonStyles.scale,
+					[Roact.Event.MouseButton1Click] = function()
+						self:setState({ notification = "Выход из игры!" })
+						-- Логика для выхода
+						game:Shutdown()
+					end,
+					[Roact.Event.MouseEnter] = function(rbx)
+						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(255, 128, 128) })
+					end,
+					[Roact.Event.MouseLeave] = function(rbx)
+						RoactSpring.tween(rbx, { BackgroundColor3 = Color3.fromRGB(255, 77, 77) })
 					end,
 				}, {
-					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 8) }),
-				}),
-				SaveButton = Roact.createElement("TextButton", {
-					Size = UDim2.new(0, 80, 0, 40),
-					BackgroundColor3 = Color3.fromRGB(0, 255, 136),
-					TextColor3 = Color3.fromRGB(30, 30, 46),
-					TextSize = 14,
-					Font = Enum.Font.GothamBold,
-					Text = "Сохранить",
-					[Roact.MouseButton1Click] = function()
-						self:setState({ notification = "Скрипт сохранен!" })
-					end,
-				}, {
-					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 8) }),
+					UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 10) }),
+					UIGradient = Roact.createElement("UIGradient", {
+						Color = ColorSequence.new({
+							ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 77, 77)),
+							ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 128, 128)),
+						}),
+					}),
 				}),
 			}),
 		}),
@@ -159,13 +171,19 @@ function DeltaExecutorMenu:render()
 			Text = self.state.notification,
 			BackgroundTransparency = notificationStyles.transparency,
 			Visible = self.state.notification ~= "",
+			[Roact.Event.AncestryChanged] = function()
+				if self.state.notification ~= "" then
+					task.wait(2)
+					self:setState({ notification = "" })
+				end
+			end,
 		}, {
 			UICorner = Roact.createElement("UICorner", { CornerRadius = UDim.new(0, 5) }),
 		}),
 	})
 end
 
-function DeltaExecutorMenu:didMount()
+function MainMenu:didMount()
 	-- Начальная анимация
 	self:setState({ isVisible = true })
 end
@@ -173,14 +191,15 @@ end
 -- Монтирование компонента
 local player = Players.LocalPlayer
 local playerGui = player.PlayerGui
-local handle = Roact.mount(Roact.createElement(DeltaExecutorMenu), playerGui, "DeltaExecutorMenu")
+local handle = Roact.mount(Roact.createElement(MainMenu), playerGui, "MainMenu")
 
 -- Показ/скрытие меню по клавише M
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
 	if input.KeyCode == Enum.KeyCode.M then
-		Roact.update(handle, Roact.createElement(DeltaExecutorMenu, {
-			isVisible = not Roact.getElementByHandle(handle).state.isVisible,
+		local currentState = Roact.getElementByHandle(handle).state.isVisible
+		Roact.update(handle, Roact.createElement(MainMenu, {
+			isVisible = not currentState,
 		}))
 	end
 end)

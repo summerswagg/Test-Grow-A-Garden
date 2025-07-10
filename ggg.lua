@@ -109,14 +109,14 @@ uiListLayout.Padding = UDim.new(0, 10)
 uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 uiListLayout.Parent = buttonContainer
 
--- Боковая вкладка настроек (слева от mainFrame)
+-- Боковая вкладка настроек
 local settingsFrame = Instance.new("Frame")
 settingsFrame.Size = UDim2.new(0, 200, 0, 350)
-settingsFrame.Position = UDim2.new(1, 0, 0, 0) -- Начинается справа от mainFrame
+settingsFrame.Position = UDim2.new(1, 400, 0, 0) -- Начинается справа от mainFrame
 settingsFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 settingsFrame.BorderSizePixel = 0
 settingsFrame.Visible = false
-settingsFrame.Parent = screenGui -- Переносим в screenGui для правильного позиционирования
+settingsFrame.Parent = screenGui
 
 local settingsCorner = Instance.new("UICorner")
 settingsCorner.CornerRadius = UDim.new(0, 12)
@@ -329,7 +329,9 @@ end
 local function updateRGB()
     local time = tick()
     uiStroke.Color = currentRGBMode(time)
-    settingsStroke.Color = currentRGBMode(time)
+    if settingsFrame then
+        settingsStroke.Color = currentRGBMode(time)
+    end
 end
 
 RunService.RenderStepped:Connect(updateRGB)
@@ -379,14 +381,14 @@ local function toggleSettings()
     if settingsFrame then
         if isSettingsOpen then
             settingsFrame.Visible = true
-            settingsFrame.Position = UDim2.new(1, 400, 0, 0) -- Начинается справа от mainFrame
-            local tween = TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = UDim2.new(1, 0, 0, 0)})
-            tween:Play()
+            settingsFrame.Position = UDim2.new(1, 400, 0, 0) -- Начальная позиция справа от mainFrame
+            local tweenIn = TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = UDim2.new(1, 0, 0, 0)})
+            tweenIn:Play()
             showNotification("Settings Opened", Color3.fromRGB(0, 200, 255))
         else
-            local tween = TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Position = UDim2.new(1, 400, 0, 0)})
-            tween:Play()
-            tween.Completed:Wait()
+            local tweenOut = TweenService:Create(settingsFrame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Position = UDim2.new(1, 400, 0, 0)})
+            tweenOut:Play()
+            tweenOut.Completed:Wait()
             settingsFrame.Visible = false
             showNotification("Settings Closed", Color3.fromRGB(0, 200, 255))
         end
